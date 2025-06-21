@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atış Noktası ve Mesafe Hesaplayıcı | Balistik Analiz</title>
+    <meta name="description" content="Mermi isabet elipsi, yükseklik ve zemin eğimi verileriyle atıcının tahmini konumunu ve atış mesafesini hesaplayın. Olay yeri incelemede pratik yardım.">
+    <meta name="keywords" content="atış noktası bulma, mermi mesafe hesaplama, atıcı konumu, balistik analiz, olay yeri incelemesi, mermi geliş açısı, zemin eğimi, trigonometri">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Open+Sans:wght=400;600&display=swap" rel="stylesheet">
+    <style>
+        /* Genel Stil Ayarları */
+        body {
+            font-family: 'Open Sans', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to right, #2c3e50 0%, #34495e 100%); /* Koyu gri/lacivert degrade */
+            color: #ecf0f1; /* Açık gri metin rengi */
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column; /* İçeriği dikey ortala */
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 30px;
+            background-color: rgba(44, 62, 80, 0.95); /* Koyu arka planın yarı şeffaf tonu */
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            text-align: center;
+            color: #ecf0f1; /* İç metin rengi */
+        }
+
+        h1 {
+            color: #3498db; /* Mavi Başlık */
+            font-family: 'Montserrat', sans-serif;
+            font-size: 2.5em;
+            margin-bottom: 25px;
+            border-bottom: 3px solid #e74c3c; /* Kırmızı çizgi */
+            padding-bottom: 10px;
+            display: inline-block;
+        }
+
+        h2 {
+            color: #2ecc71; /* Yeşil Alt Başlık */
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.8em;
+            margin-top: 35px;
+            margin-bottom: 18px;
+        }
+
+        p {
+            font-size: 1em;
+            margin-bottom: 15px;
+            color: #bdc3c7; /* Daha soluk gri */
+        }
+
+        /* Form Elemanları */
+        label {
+            display: block;
+            text-align: left;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #f4f4f4; /* Açık gri */
+            font-size: 1em;
+        }
+
+        input[type="number"],
+        select,
+        textarea { /* Textarea için de stil ekledik */
+            width: calc(100% - 24px);
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #7f8c8d; /* Orta gri */
+            border-radius: 8px;
+            font-size: 1em;
+            box-sizing: border-box;
+            background-color: #3b5066; /* Input arka planı */
+            color: #ecf0f1; /* Input metin rengi */
+        }
+        input::placeholder, textarea::placeholder {
+            color: #bdc3c7; /* Placeholder rengi */
+        }
+
+        button {
+            background-color: #e74c3c; /* Kırmızı buton */
+            color: white;
+            padding: 14px 28px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.2em;
+            font-weight: 700;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            width: auto;
+            margin: 25px auto;
+            display: block;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        button:hover {
+            background-color: #c0392b; /* Hover'da daha koyu kırmızı */
+            transform: translateY(-2px);
+        }
+
+        .result {
+            margin-top: 35px;
+            padding: 25px;
+            background-color: #2c3e50; /* Sonuç kutusu arka planı */
+            border-left: 6px solid #3498db; /* Mavi sol çizgi */
+            border-radius: 10px;
+            text-align: left;
+            font-size: 1.1em;
+            color: #ecf0f1;
+        }
+
+        .result p {
+            margin-bottom: 10px;
+            color: #ecf0f1;
+        }
+
+        .result strong {
+            color: #2ecc71; /* Yeşil vurgu */
+        }
+
+        .note {
+            font-size: 0.95em;
+            color: #bdc3c7;
+            margin-top: 35px;
+            padding: 18px;
+            background-color: #34495e; /* Not kutusu arka planı */
+            border-radius: 10px;
+            border: 1px dashed #f39c12; /* Turuncu kesikli çizgi */
+            text-align: left;
+        }
+
+        .note ul, .note ol {
+            list-style-type: disc;
+            margin-left: 20px;
+            padding-left: 0;
+            color: #bdc3c7;
+        }
+
+        .note li {
+            margin-bottom: 5px;
+        }
+        
+        #egimProfiliDiv {
+            border: 1px dashed #3498db;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            background-color: rgba(52, 152, 219, 0.1); /* Hafif mavi şeffaf arka plan */
+        }
+        .egim-entry {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            gap: 10px; /* Elemanlar arası boşluk */
+            flex-wrap: wrap; /* Küçük ekranlarda alta geçsin */
+        }
+        .egim-entry select, .egim-entry input {
+            flex: 1; /* Esnek genişlik */
+            min-width: 100px; /* Minimum genişlik */
+            margin-bottom: 0; /* İç elemanların marginini sıfırla */
+        }
+        .egim-entry button {
+            background-color: #e67e22; /* Turuncu */
+            padding: 8px 15px;
+            font-size: 0.9em;
+            margin: 0;
+            min-width: 80px; /* Buton genişliği */
+        }
+        .egim-entry button:hover {
+            background-color: #d35400;
+        }
+        #addEgimButton {
+            background-color: #2ecc71; /* Yeşil Ekle butonu */
+            margin-top: 10px;
+        }
+        #addEgimButton:hover {
+            background-color: #27ae60;
+        }
+
+        /* Responsive Tasarım */
+        @media (max-width: 768px) {
+            .container {
+                margin: 20px 15px;
+                padding: 20px;
+            }
+            h1 {
+                font-size: 2em;
+            }
+            h2 {
+                font-size: 1.5em;
+            }
+            input[type="number"],
+            select,
+            textarea,
+            button {
+                font-size: 0.95em;
+                padding: 10px;
+            }
+            .result, .note {
+                font-size: 1em;
+                padding: 15px;
+            }
+            .egim-entry {
+                flex-direction: column; /* Dikey sırala */
+                gap: 5px;
+            }
+            .egim-entry select, .egim-entry input {
+                width: 100%;
+                min-width: unset;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Atış Noktası ve Mesafe Hesaplayıcı</h1>
+        <p>Mermi isabet elipsi, yüksekliği ve zemin eğimi verilerini kullanarak, atıcının tahmini konumunu ve atış mesafesini belirleyin. Olay yeri incelemesi ve balistik analizler için pratik bir yardımcı araçtır.</p>
+
+        <h2>Gerekli Olay Yeri Girdileri</h2>
+
+        <label for="isabetYuksekligi">1. Merminin Hedefe Çarptığı Noktanın Yerden Yüksekliği (metre):</label>
+        <input type="number" id="isabetYuksekligi" value="12.5" step="0.1" placeholder="Örn: 12.5 m">
+
+        <label for="kisaEksen">2. İsabet Elipsinin Kısa Eksen Uzunluğu (cm):</label>
+        <input type="number" id="kisaEksen" value="0.4" step="0.01" placeholder="Örn: 0.4 cm">
+
+        <label for="uzunEksen">3. İsabet Elipsinin Uzun Eksen Uzunluğu (cm):</label>
+        <input type="number" id="uzunEksen" value="0.8" step="0.01" placeholder="Örn: 0.8 cm">
+
+        <label for="gelenYon">4. Merminin Geldiği Genel Yön (Açıklama Amaçlı):</label>
+        <textarea id="gelenYon" rows="2" placeholder="Örn: Binanın güney cephesinden, karşıdaki ağaçlık alandan geliyor."></textarea>
+
+        <h2>5. Zemin Profili (Hedef Noktasından Geriye Doğru, Atış Yönünde)</h2>
+        <div id="egimProfiliDiv">
+            <button id="addEgimButton" onclick="addEgimEntry()">+ Zemin Kesiti Ekle</button>
+        </div>
+        
+        <label for="aticininYuksekligi">6. Atıcının (Namlunun) Yerden Tahmini Yüksekliği (metre):</label>
+        <input type="number" id="aticininYuksekligi" value="1.6" step="0.1" placeholder="Örn: 1.6 m (Ortalama insan boyu)">
+
+        <label for="ikiBinaArasiMesafe">7. İki Bina Arası Mesafe (Sadece atış iki bina arasından yapıldıysa, metre):</label>
+        <input type="number" id="ikiBinaArasiMesafe" value="0" step="0.1" placeholder="Örn: 10 m (Yoksa 0 bırakın)">
+
+        <button onclick="hesapla()">ATIŞ NOKTASINI HESAPLA</button>
+
+        <div class="result" id="sonuclar">
+            <h2>Analiz Sonuçları</h2>
+            <p>Yukarıdaki bilgileri eksiksiz girip "ATIŞ NOKTASINI HESAPLA" butonuna tıklayarak sonuçları görebilirsiniz.</p>
+        </div>
+
+        <div class="note">
+            <p><strong>Önemli Notlar ve Olay Yeri İpuçları:</strong></p>
+            <ul>
+                <li><strong>Hassasiyet:</strong> Tüm ölçümlerin (yükseklik, elips kenarları, zemin eğimi) milimetrik veya santimetrik hassasiyetle yapılması, sonucun doğruluğu için kritik öneme sahiptir.</li>
+                <li><strong>Elips Ölçümleri (Kısa ve Uzun Eksen):</strong> Merminin çarptığı yüzeyde oluşan elipsin en dar (kısa) ve en geniş (uzun) noktalarını hassas bir kumpas veya cetvel ile ölçün. Bu, merminin çarpışma açısını belirlemek için temel veridir.</li>
+                <li><strong>Merminin Geldiği Yön:</strong> Merminin geliş açısı hesaplansa da, **yatay yönünü (azimut açısı)** olay yerindeki mermi deliği şekli, etrafındaki parçacık dağılımı veya içerideki mermi yolu izlerinden tespit etmeniz gerekmektedir.</li>
+                <li><strong>Zemin Eğiminin Önemi:</strong> Eğimli zeminler, atış mesafesini ve atıcının yerden yüksekliğini doğrudan etkiler. Bu nedenle atış yönündeki zeminin her düz ve eğimli kesitini dikkatlice ölçün ve "Zemin Profili" kısmına ekleyin.</li>
+                <li><strong>Sonuçların Yorumlanması:</strong> Elde edilen sonuçlar birer **matematiksel tahmindir** ve hava sürtünmesi gibi bazı fiziksel etkileri basitçe modeller. Adli kesinlik taşımaz. Saha çalışmaları, balistik uzman görüşü ve diğer fiziksel deliller her zaman önceliklidir.</li>
+            </ul>
+            <p><strong>Verilen Değerler:</strong></p>
+            <ul id="verilenDegerlerList">
+                <li>Henüz hesaplama yapılmadı.</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Zemin profili girişlerini yönetmek için
+        let egimEntryCounter = 0;
+
+        function addEgimEntry(initialData = null) {
+            egimEntryCounter++;
+            const egimProfiliDiv = document.getElementById('egimProfiliDiv');
+            const newEntryDiv = document.createElement('div');
+            newEntryDiv.className = 'egim-entry';
+            newEntryDiv.id = `egimEntry_${egimEntryCounter}`;
+
+            newEntryDiv.innerHTML = `
+                <label>Kesit ${egimEntryCounter} Tipi:</label>
+                <select id="egimType_${egimEntryCounter}" onchange="toggleEgimDetails(${egimEntryCounter})">
+                    <option value="düz" ${initialData && initialData.tip === 'düz' ? 'selected' : ''}>Düz Zemin</option>
+                    <option value="eğimli" ${initialData && initialData.tip === 'eğimli' ? 'selected' : ''}>Eğimli Zemin</option>
+                </select>
+                
+                <label>Uzunluk (m):</label>
+                <input type="number" id="egimLength_${egimEntryCounter}" value="${initialData ? initialData.uzunluk : '10'}" step="0.1" placeholder="Örn: 10 m">
+                
+                <div id="egimDetails_${egimEntryCounter}" style="display: ${initialData && initialData.tip === 'eğimli' ? 'flex' : 'none'}; gap: 10px; flex: 2; align-items: center;">
+                    <label>Eğim Açısı (°):</label>
+                    <input type="number" id="egimAngle_${egimEntryCounter}" value="${initialData && initialData.egim_aci !== undefined ? initialData.egim_aci : '5'}" step="0.1" placeholder="Örn: 5">
+                    
+                    <label>Yön:</label>
+                    <select id="egimDirection_${egimEntryCounter}">
+                        <option value="yukarı" ${initialData && initialData.yon === 'yukarı' ? 'selected' : ''}>Yokuş Yukarı</option>
+                        <option value="aşağı" ${initialData && initialData.yon === 'aşağı' ? 'selected' : ''}>Yokuş Aşağı</option>
+                    </select>
+                </div>
+                <button onclick="removeEgimEntry(${egimEntryCounter})">Kaldır</button>
+            `;
+            egimProfiliDiv.insertBefore(newEntryDiv, document.getElementById('addEgimButton'));
+            toggleEgimDetails(egimEntryCounter); // Yeni eklenen entry için başlangıç durumunu ayarla
+        }
+
+        function removeEgimEntry(id) {
+            document.getElementById(`egimEntry_${id}`).remove();
+            // Geri kalan etiketleri yeniden düzenlemek gerekebilir, ancak şimdilik basit tutalım.
+        }
+
+        function toggleEgimDetails(id) {
+            const type = document.getElementById(`egimType_${id}`).value;
+            const detailsDiv = document.getElementById(`egimDetails_${id}`);
+            if (type === 'eğimli') {
+                detailsDiv.style.display = 'flex';
+            } else {
+                detailsDiv.style.display = 'none';
+            }
+        }
+
+        // Sayfa yüklendiğinde varsayılan bir zemin kesiti ekleyelim
+        document.addEventListener('DOMContentLoaded', () => {
+            addEgimEntry({ tip: 'düz', uzunluk: 50.0 }); // Varsayılan olarak 50 metrelik düz zemin
+        });
+
+
+        // Balistik hesaplama ana fonksiyonu
+        function hesapla() {
+            // --- 1. Giriş Değerlerini Al ---
+            const isabetYuksekligi = parseFloat(document.getElementById('isabetYuksekligi').value); // metre
+            const kisaEksen = parseFloat(document.getElementById('kisaEksen').value); // cm
+            const uzunEksen = parseFloat(document.getElementById('uzunEksen').value); // cm
+            const gelenYon = document.getElementById('gelenYon').value;
+            const aticininYuksekligi = parseFloat(document.getElementById('aticininYuksekligi').value); // metre
+            const ikiBinaArasiMesafe = parseFloat(document.getElementById('ikiBinaArasiMesafe').value); // metre
+
+            // Zemin profili verilerini oku
+            const egimProfilData = [];
+            for (let i = 1; i <= egimEntryCounter; i++) {
+                const entryDiv = document.getElementById(`egimEntry_${i}`);
+                if (entryDiv) { // Silinmiş girişleri kontrol et
+                    const type = document.getElementById(`egimType_${i}`).value;
+                    const uzunluk = parseFloat(document.getElementById(`egimLength_${i}`).value);
+                    const entry = { tip: type, uzunluk: uzunluk };
+                    if (type === 'eğimli') {
+                        entry.egim_aci = parseFloat(document.getElementById(`egimAngle_${i}`).value);
+                        entry.yon = document.getElementById(`egimDirection_${i}`).value;
+                    }
+                    egimProfilData.push(entry);
+                }
+            }
+
+            // --- 2. Giriş Kontrolleri ve Hata Mesajları ---
+            if (isNaN(isabetYuksekligi) || isNaN(kisaEksen) || isNaN(uzunEksen) ||
+                isNaN(aticininYuksekligi) || isNaN(ikiBinaArasiMesafe) ||
+                kisaEksen <= 0 || uzunEksen <= 0 || kisaEksen > uzunEksen ||
+                isabetYuksekligi < 0 || aticininYuksekligi < 0 ||
+                egimProfilData.length === 0 || egimProfilData.some(e => isNaN(e.uzunluk) || e.uzunluk <= 0 || (e.tip === 'eğimli' && (isNaN(e.egim_aci) || e.egim_aci < 0)))) {
+                
+                document.getElementById('sonuclar').innerHTML = `
+                    <h2>Hata!</h2>
+                    <p style="color: #e74c3c;">Lütfen tüm gerekli alanlara geçerli ve pozitif sayısal değerler girin.</p>
+                    <p style="color: #e74c3c;">Kısa eksen uzun eksenden büyük olamaz. Yükseklik ve uzunluk değerleri negatif veya sıfır olamaz.</p>
+                    <p style="color: #e74c3c;">Zemin profili için en az bir kesit eklenmeli ve geçerli değerler içermelidir.</p>
+                `;
+                return;
+            }
+
+            // --- 3. Mermi Geliş Açısı Hesaplama ---
+            let carpisAcisiRadyan;
+            const oran = kisaEksen / uzunEksen;
+            if (oran > 0.999999) { // Yuvarlama hatalarını engellemek için 1'e çok yakınsa 90 derece kabul et
+                carpisAcisiRadyan = Math.PI / 2; // 90 derece (radyan)
+            } else {
+                carpisAcisiRadyan = Math.asin(oran);
+            }
+            const carpisAcisiDerece = carpisAcisiRadyan * (180 / Math.PI);
+
+            // --- 4. Atış Mesafesi ve Atıcı Konumu Hesaplama ---
+            // Bu kısım, yüklediğiniz görsellerdeki mantığı ve daha önce konuştuğumuz zemin eğimi modelini birleştirecektir.
+            // Amaç: Belirli bir giriş açısı ve hedef yüksekliği ile, zemin profilini geriye doğru takip ederek
+            // atıcının olması gereken yatay mesafeyi ve o noktadaki zeminin yüksekliğini bulmak.
+
+            let atisMesafesiYatay = 0; // Hedeften geriye doğru toplam yatay mesafe
+            let mevcutZeminYuksekligi = 0; // Hedef noktasının referans aldığı zeminin başlangıç yüksekliği (0 kabul edelim)
+            let mermiYoluDikeyFark = isabetYuksekligi - aticininYuksekligi; // Merminin dikey olarak kat etmesi gereken net mesafe
+
+            let bulundu = false;
+            const hassasiyet = 0.01; // Metre cinsinden hassasiyet
+            const maxMesafeKontrol = 500; // Maksimum kontrol edilecek yatay mesafe (metre)
+
+            // Kaba bir tahminle maksimum menzil belirleyelim ki sonsuz döngüye girmeyelim
+            // tan(geliş açısı) = (yükseklik farkı) / mesafe
+            // mesafe = yükseklik farkı / tan(geliş açısı)
+            // Bu sadece başlangıç için, eğimden dolayı değişecek
+            let tahminiMaxYatayMesafe = Math.abs(mermiYoluDikeyFark) / Math.tan(carpisAcisiRadyan);
+            if (tahminiMaxYatayMesafe > maxMesafeKontrol || isNaN(tahminiMaxYatayMesafe) || !isFinite(tahminiMaxYatayMesafe)) {
+                tahminiMaxYatayMesafe = maxMesafeKontrol;
+            }
+
+
+            for (let d = hassasiyet; d <= tahminiMaxYatayMesafe + 50; d += hassasiyet) { // Adım adım mesafeyi artır
+                let simZeminYuksekligi = 0;
+                let mevcutMesafe = d; // Geriye doğru toplam kat edilen yatay mesafe
+
+                for (const kesit of egimProfilData) {
+                    if (mevcutMesa <= 0) break; // Tüm mesafe tüketildiyse döngüden çık
+
+                    if (mevcutMesa >= kesit.uzunluk) { // Kesitin tamamı mesafenin içinde
+                        if (kesit.tip === 'eğimli') {
+                            const egimRadyan = kesit.egim_aci * (Math.PI / 180);
+                            if (kesit.yon === 'yukarı') {
+                                simZeminYuksekligi += kesit.uzunluk * Math.tan(egimRadyan);
+                            } else { // Yokuş aşağı
+                                simZeminYuksekligi -= kesit.uzunluk * Math.tan(egimRadyan);
+                            }
+                        }
+                        mevcutMesa -= kesit.uzunluk;
+                    } else { // Kesitin sadece bir kısmı mesafenin içinde
+                        if (kesit.tip === 'eğimli') {
+                            const egimRadyan = kesit.egim_aci * (Math.PI / 180);
+                            if (kesit.yon === 'yukarı') {
+                              
